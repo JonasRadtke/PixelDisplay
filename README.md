@@ -1,19 +1,15 @@
-﻿# BachelorprojectSoundprocessor
-A 8bit Sound Keyboard
+﻿# PixelDisplay
+16x16 Pixel Display with WS2812b
 
-SS 2017 - Bachelorprojekt - Bachelor Project of Electrical Engineering   
-by Thorben Kay, Tim Staats, Jonas Radtke, Sven Ehlers, Hans-Nikolaus Kreutzfeldt
+by Jonas Radtke
 
 ## Overview
 ### Input
-* Keyboard with 49 Keys (old Keyboard is used)
-	* Complete new Circuit Board
-	* Multiplexing Keys
-* Switches and Led for Modes
+* SD-Card (in progress)
+* RTC
 
 ### Output
-* 8 bit DAC
-* TDA Amp for Speaker
+* 16x16 WS2812b
   
 ### µC
 * Atmel SAM G53N19
