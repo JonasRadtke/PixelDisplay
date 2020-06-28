@@ -13,9 +13,11 @@
 #include "structs.h"
 #include "uartt.h"
 #include "perepherie.h"
-#include "dac.h"
 #include "display.h"
+#include "device.h"
+#include "files.h"
 
 void print_tasten(void);
 
 volatile uint8_t inlinetest(uint8_t *) ;
+

@@ -10,6 +10,13 @@
 
 volatile uint32_t res = 1;
 volatile	uint8_t displayout[768] = {170};
+	
+pixel display[256];
+
+uint8_t gamma8[256];
+
+
+	
 void timerInit (void){
 	uint32_t rc;
 	// Timer für Oszillatoren
@@ -75,16 +82,52 @@ void TC0_Handler()
 
 }
 
+// Init des Gamma Korrektur Arrays
+void initGammaCorr(uint8_t x[], float gamma, uint32_t bright)
+{
+	uint32_t i;
+	float temp;
+	
+	for (i=0; i<256; i++) // (i/255)^gamma * 255
+	{
+		temp = (float)i* ((float)bright * 12) / 120;
+		temp = (float)temp/255;
+		temp = pow(temp, gamma);
+		x[i] = (uint8_t)ceil((temp * 255)); // Gamma Korrektur	
+	}	
+}
 
 
+// Copy a BMP in Display Array to Out Buffer Array
+void BMPToOutBuffer (pixel x[], uint8_t out[])
+{
+	uint32_t i; // 0-15
+	uint32_t zeile; // 0-15
+	uint32_t j = 0;
+	
+	for (zeile=0; zeile<16; zeile++) // 16 Zeilen
+	{
+		for (i=0; i<48-1; i+=3)	// 48 byte, 3x16 pro pixel
+		{
+			if (zeile%2 == 0)	// Gerade Zeilen laufen von links nach rechts, ungerade von rechts nach links
+			{
+				out[zeile*48+i] = gamma8[x[j].blue];
+				out[zeile*48+i+1] =gamma8[x[j].red] ;
+				out[zeile*48+i+2]= gamma8[x[j].green] ;
+			}
+			else
+			{
+				out[zeile*48+48-3-i] = gamma8[x[j].blue];
+				out[zeile*48+48-3-i+1] =gamma8[x[j].red];
+				out[zeile*48+48-3-i+2]= gamma8[x[j].green] ;
+			}
+			
+			
 
-
-
-
-
-
-
-
+			j++;
+		}
+	}
+}
 
 #define ws2812_First "nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t"
 #define ws2812_Second "nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t"
@@ -97,32 +140,32 @@ void ws2812_sendarray(uint8_t *data,int datlen)
 	// Systick abschalten
 	SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk  ;
 	
-	uint32_t maskhi = PIO_PA0; //ws2812_mask_set;
-	uint32_t masklo = PIO_PA0; //ws2812_mask_clr;
+	uint32_t maskhi = DISPLAY_OUT;					//ws2812_mask_set;
+	uint32_t masklo = DISPLAY_OUT;					//ws2812_mask_clr;
 	volatile uint32_t *set = &PIOA->PIO_SODR;	//  Pin Set Register Adresse
 	volatile uint32_t *clr = &PIOA->PIO_CODR;	//  Pin Clear Register Adresse
 	uint32_t i;
 	uint32_t curbyte;
 
-	while (datlen--) { // Länge einen runter zählen bis null
+	while (datlen--) {		// Länge einen runter zählen bis null
 		curbyte=*data--;	// Nächstes Byte laden
 
 		asm volatile(
-		"		lsl %[dat],#24				\n\t" // 8 bit ganz nach links schieben
-		"		movs %[ctr],#8				\n\t" // Eine 8 laden, für 8 Bit die gesendet werden
-		"ilop%=:							\n\t" // Schleifen
-		"		str %[maskhi], [%[set]]		\n\t" // High Ausgang
+		"		lsl %[dat],#24				\n\t"	// 8 bit ganz nach links schieben
+		"		movs %[ctr],#8				\n\t"	// Eine 8 laden, für 8 Bit die gesendet werden
+		"ilop%=:							\n\t"	// Schleifen
+		"		str %[maskhi], [%[set]]		\n\t"	// High Ausgang
 
 		ws2812_First								// Erste 0,4 us von ingesamt 1,25 us warten
 
-		"		lsls %[dat], #1				\n\t" // Bit eins nach links schieben
+		"		lsls %[dat], #1				\n\t"	// Bit eins nach links schieben
 		"		bcs one%=					\n\t"	// Wenn es einen Carry gab dann war das Bit eine eins
 		"		str %[masklo], [%[clr]]		\n\t"	// Ansonsen Ausgang auf Low
 		"one%=:								\n\t"
 
 		ws2812_Second								// Zweite 0,4 us warten
 		
-		"		str %[masklo], [%[clr]]		\n\t" // Ausgang auf Low, hier wieder immer auf low geschaltet
+		"		str %[masklo], [%[clr]]		\n\t"	// Ausgang auf Low, hier wieder immer auf low geschaltet
 		"		subs %[ctr], #1				\n\t"	// von dem 8bit zähler einen abziehen
 		"		beq	end%=					\n\t"	// Auf Zero vergleichen, wenn null dann Ende und nächstes Byte
 

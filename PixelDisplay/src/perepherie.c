@@ -22,7 +22,7 @@ void twiInit(){
 	/* set clock waveform generator register */
 	TWI2->TWI_CWGR = TWI_CWGR_CLDIV(236) | TWI_CWGR_CHDIV(236) | TWI_CWGR_CKDIV(0);
 	
-	delay_us(500);
+//	delay_us(500);
 }
 
 void adcInit(){

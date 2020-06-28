@@ -62,9 +62,6 @@
 // From module: Common build items for user board support templates
 #include <user_board.h>
 
-// From module: Delay routines
-#include <delay.h>
-
 // From module: EEFC - Enhanced Embedded Flash Controller
 #include <efc.h>
 
@@ -89,6 +86,13 @@
 
 // From module: SAMG53 startup code
 #include <exceptions.h>
+
+// From module: SPI - SAM Implementation
+#include <spi_master.h>
+#include <spi_master.h>
+
+// From module: SPI - Serial Peripheral Interface
+#include <spi.h>
 
 // From module: SUPC - Supply Controller
 #include <supc.h>
